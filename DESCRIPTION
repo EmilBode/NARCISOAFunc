@@ -1,0 +1,24 @@
+Package: NARCISOAfunc
+Title: A Collection of Helper Functions Used when Working with NARCIS, Unpaywall and Open Access Monitoring
+Version: 0.0.0.9000
+Authors@R: person("Emil", "Bode", email = "Emil.Bode@dans.knaw.nl", role = c("aut", "cre"))
+Description: A collection of functions that I've developed as part of my workflow. May be too specific for general use, but feel free to re-use and adapt.
+Depends: R (>= 3.5.0)
+Imports:
+    EmilMisc (>= 0.0.1),
+    MongoPlussed (>= 0.0.1),
+    oai (>= 0.2.2),
+    roadoi (>= 0.5.1),
+    RMongo (>= 0.0.25),
+    mongolite (>= 1.5),
+    jsonlite (>= 1.5),
+    lubridate (>= 1.7.4),
+    plyr (>= 1.8.4),
+    pdftools (>= 1.8),
+    zoo (>= 1.8.2),
+    tidyr (>= 0.8.1),
+    readxl (>= 1.1.0)
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.0.1
