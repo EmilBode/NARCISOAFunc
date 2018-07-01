@@ -9,8 +9,8 @@ options(Paths=local({
   # Extend path-list here
   return(Paths)
 }))
-library(EmilMisc)
-libinstandload('devtools','roxygen2',local({
+
+invisible(sapply(c('EmilMisc','devtools','roxygen2',local({
   libs <- readLines('DESCRIPTION')
   if(any(grepl('Imports:',libs))) {
     imps <- libs[grep('Imports:',libs):length(libs)]
@@ -24,4 +24,4 @@ libinstandload('devtools','roxygen2',local({
     deps <- deps[deps!='R']
   } else deps <- NULL
   c(imps, deps)
-}))
+})), function(p) {suppressPackageStartupMessages(library(p, character.only=TRUE))}))
