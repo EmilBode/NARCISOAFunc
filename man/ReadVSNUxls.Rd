@@ -5,7 +5,7 @@
 \title{Read the numbers from the VSNU, based downloadable Excelsheet}
 \usage{
 
-  ReadVSNUxls(xls = "http://www.vsnu.nl/files/documenten/Feiten_en_Cijfers/Inzet_en_output_2015.xlsx")
+  ReadVSNUxls(xls = "http://www.vsnu.nl/files/documenten/Feiten_en_Cijfers/Inzet_en_output_2016.xlsx")
 }
 \arguments{
 \item{xls}{Paths to excelsheet}

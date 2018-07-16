@@ -266,15 +266,17 @@ ReadVSNUpdf <- function(pdfs=paste0(getOption('Paths')$Input,c('/Narcis versus K
 #' @param xls Paths to excelsheet
 #' @return data.frame with data
 #' @export
-ReadVSNUxls <- function(xls='http://www.vsnu.nl/files/documenten/Feiten_en_Cijfers/Inzet_en_output_2015.xlsx') {
+ReadVSNUxls <- function(xls='http://www.vsnu.nl/files/documenten/Feiten_en_Cijfers/Inzet_en_output_2016.xlsx') {
   EmilMisc::libinstandload('readxl','tidyr')
+  year <- regexpr('[0-9]{4}\\.xlsx?', xls)
+  year <- substring(xls, year, year+3)
   if(grepl('^https?://', xls)) {
     tfile <- tempfile(fileext = sub('^.*/[^\\./]+','', xls))
     utils::download.file(xls, tfile, mode="wb")
     xls <- tfile
     rm(tfile)
   }
-  Thesis <- readxl::read_excel(xls, sheet='Dissertaties  2000-2015')
+  Thesis <- readxl::read_excel(xls, sheet=paste0('Dissertaties  2000-',year))
   Thesis <- Thesis[(which(Thesis[1]=='Dissertaties per universiteit')+1):
                      (which(Thesis[1]=='Dissertaties per universiteit, exclusief HOOP-gebied Gezondheid')),]
   Thesis[1,1] <- 'Universiteit'
@@ -282,7 +284,7 @@ ReadVSNUxls <- function(xls='http://www.vsnu.nl/files/documenten/Feiten_en_Cijfe
   Thesis <- Thesis[2:(which(Thesis[1]=='Totaal')-1),]
   Thesis <- tidyr::gather(Thesis, 'Jaar','Aantal', -'Universiteit')
 
-  Vak <- readxl::read_excel(xls, sheet='Vakpublicaties 2000-2015')
+  Vak <- readxl::read_excel(xls, sheet=paste0('Vakpublicaties 2000-',year))
   Vak <- Vak[(which(Vak[1]=='Vakpublicaties per universiteit')+1):
                      (which(Vak[1]=='Vakpublicaties per universiteit, exclusief HOOP-gebied Gezondheid')),]
   Vak[1,1] <- 'Universiteit'
@@ -290,7 +292,7 @@ ReadVSNUxls <- function(xls='http://www.vsnu.nl/files/documenten/Feiten_en_Cijfe
   Vak <- Vak[2:(which(Vak[1]=='Totaal')-1),]
   Vak <- tidyr::gather(Vak, 'Jaar','Aantal', -'Universiteit')
 
-  Wetensch <- readxl::read_excel(xls, sheet='Wetensch. publ.  2000-2015')
+  Wetensch <- readxl::read_excel(xls, sheet=paste0('Wetensch. publ.  2000-',year))
   Wetensch <- Wetensch[(which(Wetensch[1]=='Wetenschappelijke publicaties per universiteit')+1):
                      (which(Wetensch[1]=='Wetenschappelijke publicaties per universiteit, excl. HOOP-gebied Gezondheid')),]
   Wetensch[1,1] <- 'Universiteit'
