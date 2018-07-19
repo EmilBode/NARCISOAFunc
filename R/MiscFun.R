@@ -305,6 +305,101 @@ ReadVSNUxls <- function(xls='http://www.vsnu.nl/files/documenten/Feiten_en_Cijfe
   return(as.data.frame(lapply(rbind(Thesis, Wetensch, Vak)[c(4,1,2,3)], identity), stringsAsFactors=TRUE))
 }
 
+#' Apply NARCIS bussiness-rules for determining access-status
+#'
+#' To generate NARCIS-content, publications are harvested over OAI-PMH, with different schemas.
+#' This function outputs access-status based on content.
+#'
+#' @param rec A list with record-information for one record
+#' @param version Implemented for forward compatibilty: if the business-rules change this function will be updated, but only for higher version-numbers.
+#' Currently only 1 is implemented
+#' @return A nested list with information
+#' @export
+CalcAccess <- function(rec, version=1) {
+  if(!version %in% c(1)) stop('Version-number not implemented (yet)')
+  if(version==1) {
+    if(!exists('Params')) Params <- list()
+    if(is.null(Params$Accesslevels)) Params$AccessLevels <- factor(c('OpenAccess', 'RestrictedAccess', 'EmbargoedAccess','ClosedAccess'),
+                                                                   levels=c('OpenAccess', 'RestrictedAccess', 'EmbargoedAccess','ClosedAccess'), ordered = T)
+    ac <- rec$Item$Item$Component$Resource$mods
+    ac <- ac[names(ac)=='accessCondition']
+    if(length(ac)>0) {
+      act <- unname(sapply(ac, function(ac1) {
+        if(class(ac1)=='list' && 'text' %in% names(ac1)) ac1 <- ac1$text
+        if(length(ac1)>1) {
+          ac1 <- ac1[names(ac1)!='displayLabel']
+          if(length(ac1)>1) stop('Access condition has multiple fields, unclear which to use (line ',utils::getSrcLocation(function(x) {x}),')')
+        }
+        return(which(sapply(Params$AccessLevels, grepl, x=ac1, ignore.case=T))[1])
+      }))
+      act <- act[!is.na(act)]
+      if(length(act)>1) act <- act[1]
+    } else act <- NULL
+    if(length(act)>0) {
+      objfiles <- rec$Item[names(rec$Item)=='Item']
+      objfiles <- objfiles[sapply(objfiles, function(f) {
+        f$Descriptor$Statement$type[['resource']]=='info:eu-repo/semantics/objectFile'
+      })]
+      if(length(objfiles)==0) {
+        prod <- 4
+        allrights <- c(prod, act)
+      } else {
+        allrights <- unlist(objfiles)
+        allrights <- unname(allrights[names(allrights)=='Item.Descriptor.Statement.accessRights'])
+        if(length(allrights)==0) {
+          prod <- 1
+          allrights <- c(prod, act)
+        } else {
+          allrights <- unname(sapply(allrights, function(ac1) {
+            if(length(ac1)>1) {
+              ac1 <- ac1[names(ac1)!='displayLabel']
+              if(length(ac1)>1) stop('Access condition has multiple fields, unclear which to use (line ',utils::getSrcLocation(function(x) {x}),')')
+            }
+            which(sapply(Params$AccessLevels, grepl, x=ac1, ignore.case=T))
+          }))
+          if(length(allrights)>0) allrights <- allrights[!is.na(allrights)]
+          if(length(allrights)<length(objfiles)) {
+            prod <- 1
+            allrights <- c(act, allrights, 1)
+          } else {
+            prod <- min(allrights)
+            allrights <- c(act, allrights)
+          }
+        }
+      }
+    } else {
+      objfiles <- rec$Item[names(rec$Item)=='Item']
+      objfiles <- objfiles[sapply(objfiles, function(f) {
+        !is.null(f$Descriptor$Statement$type[['resource']]) && f$Descriptor$Statement$type[['resource']]=='info:eu-repo/semantics/objectFile'
+      })]
+      if(length(objfiles)==0) {
+        allrights <- act <- prod <- 4
+      } else {
+        allrights <- unlist(objfiles)
+        allrights <- unname(allrights[names(allrights)=='Item.Descriptor.Statement.accessRights'])
+        if(length(allrights)==0) {
+          allrights <- act <- prod <- 1
+        } else {
+          allrights <- unname(sapply(allrights, function(ac1) {
+            which(sapply(Params$AccessLevels, grepl, x=ac1, ignore.case=T))[1]
+          }))
+          allrights <- allrights[!is.na(allrights)]
+          if(length(allrights)<length(objfiles)) {
+            prod <- 1
+            act <- min(allrights)
+            allrights <- c(allrights, 1)
+          } else {
+            prod <- act <- min(allrights)
+          }
+        }
+      }
+    }
+    return(list(Act=as.character(Params$AccessLevels[act]),
+                Prod=as.character(Params$AccessLevels[prod]),
+                All=as.character(Params$AccessLevels[allrights])))
+  }
+}
+
 
 
 
