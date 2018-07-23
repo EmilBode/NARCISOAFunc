@@ -400,9 +400,25 @@ CalcAccess <- function(rec, version=1) {
   }
 }
 
-
-
-
+#' Does a string contain a DOI, and extract it
+#'
+#' Basically just regular expressions, wrapped in a function to simplify adaptations
+#' DOIify also converts to lowercase to ease comparisons. If an ID that is not a DOI is passed to DOIify it is returned unaltered.
+#' An ID is seen as a DOI when it satisfies the regular expression "10.\.[0-9]{4,5}/"
+#'
+#' @param ID Character vector of IDs to process
+#' @return for is.DOI: a logical of length(ID)
+#' for DOIify: a character vector of length(ID) with the bare DOIs (starting with 10.). If ID contains non-DOIs they are returned unaltered
+#'
+#' @export
+is.DOI <- function(ID) {
+  grepl('10\\.[0-9]{4,5}/', ID)
+}
+#' @rdname is.DOI
+#' @export
+DOIify <- function(ID) {
+  tolower(substring(ID, regexpr('10\\.[0-9]{4,5}/', ID)))
+}
 
 
 
