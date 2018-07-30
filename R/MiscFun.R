@@ -421,7 +421,69 @@ DOIify <- function(ID) {
 }
 
 
+#' Decide color based on Unpaywall-data
+#'
+#' Based on 4 criteria from Unpaywall:
+#' \itemize{
+#'   \item is_oa (logical)
+#'   \item host_type (character or factor, must be 'publisher', 'repository' if is_oa is TRUE)
+#'   \item journal_is_oa (logical)
+#'   \item license (character or factor)
+#' }
+#' strings are case-insensitive
+#' Applied rules are:
+#' \enumerate{
+#'   \item if is_oa is NA, 'unknown' is returned
+#'   \item if is_oa is FALSE, 'closed' is returned
+#'   \item if host_type is 'repository', 'green' is returned
+#'   \item if host_type is 'publisher' and 'journal_is_oa' is TRUE, 'pure gold' is returned
+#'   \item if host_type is 'publisher' and 'license' is NA or an empty string, 'bronze' is returned
+#'   \item if host_type is 'publisher' and 'license' is not NA or an empty, 'hyrbid' is returned
+#'   \item if we reach this step is_oa is TRUE, but host_type is unknown. SO we return 'unclear (error)'
+#' }
+#'
+#' @param ..., df Either single vectors, or a data.frame with appropriate columns (or a list with equal-length elements)
+#' Should either be named with the names "c('is_oa', 'host_type', 'journal_is_oa','license')", or be of length 4, in this order
+#' @return A vector of colors (as a factor)
+#'
+#' @export
 
+oa_color <- function(..., df=NULL) {
+  expNames <- c('is_oa', 'host_type', 'journal_is_oa','license')
+  expClasses <- list('logical',c('character','factor'), 'logical', c('character','factor'))
+  if(missing(df) & missing(...)) {
+    stop('Insufficient arguments')
+  }
+  if(!missing(df)) {
+    if(!missing(...))
+      warning('oa_color was provided with too many arguments, ignoring all but df')
+    df <- as.list(df)
+  } else {
+    df <- list(...)
+  }
+  if(!all(expNames %in% names(df)) && (length(df)!=length(expNames) || !all(mapply(df, expClasses, FUN=function(col, cl) {class(col) %in% cl}))))
+    stop('Not all expected columns (with right classes) present')
+  if(!is.null(names(df)) && all(names(df) %in% expNames) && !all(names(df)==expNames))
+    df <- df[match(expNames, names(df))]
+  len <- length(df[[1]])
+  for(i in 1:length(expNames)) {
+    assign(expNames[i], df[[i]])
+    if(length(df[[i]])!=len) stop('Unexpected length of argument ',expNames[i])
+  }
+  as.factor(ifelse(is.na(is_oa),
+                   'unknown',
+                   ifelse(is_oa,
+                          ifelse(!is.na(host_type) & tolower(host_type)=="repository",
+                                 "green",
+                                 ifelse(!is.na(host_type) & tolower(host_type)=="publisher",
+                                        ifelse(journal_is_oa,
+                                               "pure gold",
+                                               ifelse(!is.na(license) & license!='',
+                                                      "hybrid",
+                                                      "bronze")),
+                                        ifelse('unclear (error)'))),
+                          'closed')))
+}
 
 
 
